@@ -11,10 +11,12 @@ const app = express();
 
 
 app.use(cors({
-   origin: ['http://localhost:3000'],
+   origin: ['http://localhost:3000', 'https://inventory-r6r4.vercel.app'],
    methods: ['GET', 'POST', 'PUT', 'DELETE'],
    credentials: true
 }));
+
+
 app.use(express.json());
 app.use(responseFormatter);
 app.use('/api', routes);
@@ -26,12 +28,12 @@ const roles: RoleInterface[] = [
       "name": "ADMIN",
    }
 ]
-const uoms : RoleInterface[] = [
+const uoms: RoleInterface[] = [
    {
-      "name" : "Inches"
+      "name": "Inches"
    },
    {
-      "name" : "Pieces"
+      "name": "Pieces"
    }
 ]
 const userService = new UserService();
