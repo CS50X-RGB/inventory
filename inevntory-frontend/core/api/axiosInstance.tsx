@@ -3,12 +3,12 @@ import Cookies from "js-cookie";
 
 import { adminToken, currentAdmin, currentUser, isSuperAdmin } from "./localStorageKeys"
 
-export const baseUrlExport = "https://backend.rohanchatterjee866.workers.dev/api/v1/"
+export const baseUrlExport = "https://inventory-2y1y.onrender.com/api/v1/"
 export const baseUrlExportNgRok = "https://2798-106-222-236-78.ngrok-free.app"
 export const localBackend = "http://localhost:5000/api/v1/web/"
 
 const instance = axios.create({
-  baseURL: localBackend,
+  baseURL: baseUrlExport,
   headers: {
     "Content-Type": "application/json",
    //"ngrok-skip-browser-warning": "123",
