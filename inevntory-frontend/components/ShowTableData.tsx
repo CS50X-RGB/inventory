@@ -12,12 +12,13 @@ import {
     Switch,
     useDisclosure,
     Button,
+    Input
 } from "@heroui/react";
 
 import { useMutation } from "@tanstack/react-query";
 import Delete from "@/public/Icons/Delete";
 import { deleteData, putData } from "@/core/api/apiHandler";
-import { accountRoutes, partNumbersRoutes } from "@/core/api/apiRoutes";
+import { accountRoutes, bomRoutes, partNumbersRoutes } from "@/core/api/apiRoutes";
 import { queryClient } from "@/app/providers";
 
 import { toast } from "sonner";
@@ -47,7 +48,7 @@ export default function ShowTableData({
     loadingState,
     data,
 }: CustomTableProps) {
-    console.log(data,"data");
+
     const deleteById = useMutation({
         mutationKey: ["deletebyId"],
         mutationFn: async (id: any) => {
@@ -102,6 +103,33 @@ export default function ShowTableData({
             });
         },
     });
+    const [isLoadingPlanning, setisLoadingPlanning] = useState<boolean>(false);
+    const realsePlanning = useMutation({
+        mutationKey: ["realsePlanning"],
+        mutationFn: async (item: any) => {
+            return await putData(`${bomRoutes.realsePlanning}${item._id}`, {}, {
+                qty
+            });
+        },
+        onMutate: () => {
+            setisLoadingPlanning(true);
+        },
+        onSuccess: (data: any) => {
+            console.log("Release successful:", data);
+            toast.success("Realsed Successfull");
+            setisLoadingPlanning(false);
+            queryClient.invalidateQueries();
+        },
+        onError: (error: any) => {
+            console.error("Error releasing planning:", error);
+            toast.error("Realsed Failed");
+            setisLoadingPlanning(false);
+        },
+        onSettled: () => {
+            setisLoadingPlanning(false);
+        },
+    });
+
     const roleColors: Record<
         string,
         "primary" | "warning" | "success" | "danger" | "default" | "secondary"
@@ -116,12 +144,24 @@ export default function ShowTableData({
         onOpenChange: onOpenChangeStatus,
         onClose: onCloseStatus,
     } = useDisclosure();
+    const {
+        isOpen: isOpenRealse,
+        onOpen: onOpenRealse,
+        onOpenChange: onOpenChangeRealse,
+        onClose: onCloseRealse,
+    } = useDisclosure();
     const [item, setItem] = useState<any>({});
     const clickChip = (item: any) => {
         onOpenStatus();
         setItem(item);
         console.log(item, "Item");
     };
+    const [qty, setQty] = useState<string>("0");
+    const clickRelase = (item: any) => {
+        onOpenRealse();
+        setItem(item);
+        setQty(item.qty);
+    }
     const getValue = (item: any, columnKey: any): React.ReactNode => {
         console.log(columnKey, "Column");
         switch (columnKey) {
@@ -177,6 +217,20 @@ export default function ShowTableData({
                 return <p>{item.bomId.name}</p>
             case "Quantity Planned":
                 return <p>{item.qty}</p>
+            case "Planning Actions":
+                return (
+                    <EyeIcon className="size-4 cursor-pointer" onClick={() => clickRelase(item)} />
+                );
+            case "Top Level Name":
+                return <p>{item.bomId.name}</p>
+            case "Quantity":
+                return <p>{item.qty}</p>
+            case "Planning Status":
+                return (
+                    <Chip color={item.status === "Locked" ? "primary" : "success"}>
+                        {item.status}
+                    </Chip>
+                );
             case "Bom_Action":
                 return (
                     <div className="flex flex-row">
@@ -211,7 +265,7 @@ export default function ShowTableData({
                 <TableHeader columns={columnHeaders}>
                     {(column) => (
                         <TableColumn key={column.name}>
-                            {column.name === "Bom_Action" ? "Actions" : column.name}
+                            {(column.name === "Bom_Action") || (column.name === "Planning Actions") ? "Actions" : column.name}
                         </TableColumn>
                     )}
                 </TableHeader>
@@ -249,6 +303,25 @@ export default function ShowTableData({
                     >
                         User Not Blocked
                     </Switch>
+                </div>
+            </CustomModal>
+            <CustomModal
+                isOpen={isOpenRealse}
+                onOpenChange={onOpenChangeRealse}
+                heading="Realse Quantity"
+                bottomContent={
+                    <div className="flex p-2">
+                        <Button isLoading={isLoadingPlanning} type="submit" onPress={() => realsePlanning.mutate(item)} color="primary">
+                            Submit
+                        </Button>
+                        <Button onPress={onCloseRealse} color="danger">
+                            Close
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="flex flex-col">
+                    <Input type="number" max={item.qty} min={1} label="Qty" labelPlacement={"outside"} onValueChange={setQty} value={qty} />
                 </div>
             </CustomModal>
         </>

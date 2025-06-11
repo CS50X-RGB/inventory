@@ -69,6 +69,14 @@ export default function Admin({ children }: React.ReactNode) {
         {
             name : "View Planning History",
             link : "/admin/planning/all"
+        },
+        {
+            name : "Select Top Level",
+            link : "/admin/bom/plan/multi"
+        },
+        {
+            name : "View History",
+            link : "/admin/planning/all/history"
         }
     ];
     const handleLogout = () => {
@@ -79,10 +87,10 @@ export default function Admin({ children }: React.ReactNode) {
 
     return (
         <>
-            <div className="flex flex-row justify-between p-4 w-full items-center">
+            <div className="flex flex-col-reverse md:flex-row justify-between p-4 w-full items-center">
                 <div className="flex flex-col p-4 gap-2">
                     <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                    <div className="flex w-full gap-4 flex-row">
+                    <div className="flex flex-wrap gap-4 flex-row">
                         {chips.map((c: any, index: number) => {
                             return (
                                 <Chip key={index} onClick={() => router.push(c.link)} color="primary" className="cursor-pointer">

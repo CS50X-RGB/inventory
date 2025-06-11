@@ -86,9 +86,9 @@ class AssemblyLineRepo {
     }
     public async getSubAssemblyByName(name: string): Promise<any | null> {
         try {
-            const assemblyLine = await AssemblyLineModel.findOne({
-                name
-            });
+            const assemblyLine = await AssemblyLineModel
+                .findOne({ name })
+                .sort({ createdAt: -1 }); 
             return assemblyLine;
         } catch (error) {
             throw Error(`Error while getting assembly line`);
@@ -103,7 +103,7 @@ class AssemblyLineRepo {
             if (bomObject.level === 1) {
                 return bomObject.parent_id;
             } else if (bomObject.level > 1) {
-                    return this.getBOMIdByLevel(bomObject.parent_id);
+                return this.getBOMIdByLevel(bomObject.parent_id);
             }
             return null;
         } catch (error) {

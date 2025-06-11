@@ -149,6 +149,16 @@ class PartNumberRepository {
             throw error;
         }
     }
+    public async getPartNumberById(partNumber: any) {
+        try {
+            const partNumberEntity = await PartNumberModel.findById(partNumber).lean(); // ✅ chain lean() before await
+            return partNumberEntity;
+        } catch (error) {
+            console.error("Error in getPartNumberById:", error);
+            throw new Error("Error while getting part number");
+        }
+    }
+
 }
 
 export default PartNumberRepository;

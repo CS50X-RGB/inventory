@@ -29,6 +29,9 @@ export default function PlanningViewAll() {
         },
         {
             "name" : "Quantity Planned"
+        },
+        {
+            "name" : "Planning Actions"
         }
     ]
     return (

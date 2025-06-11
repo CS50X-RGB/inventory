@@ -55,7 +55,7 @@ export default function ViewPartNumbers() {
     ]
     return (
         <div className="flex flex-col gap-4 p-8">
-            <Input className="w-1/2" placeholder="Search Part Numbers" onValueChange={(e) => setSearch(e)} />
+            <Input className="w-1/2" placeholder="Search Part Numbers\" onValueChange={(e) => setSearch(e)} />
             <h1 className="text-xl font-bold">Fetched {totalCount} Inventory Part Numbers</h1>
             <ShowTableData data={getPartNumbers?.data.data} columnHeaders={columns} setPage={setPage} page={page} pages={pages} loadingState={isFetching} />
         </div>

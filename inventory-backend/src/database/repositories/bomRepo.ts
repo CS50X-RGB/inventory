@@ -2,9 +2,10 @@ import { ObjectId } from "mongoose";
 import { BomCreateInterface } from "../../interfaces/bomInterface";
 import BOMModel from "../models/bomModel";
 import AssemblyLineRepo from "./assemblyLineRepo";
-import { BOMPlanningCreate, PlanningCreateObject } from "../../interfaces/planningInterface";
+import { BOMPlanningCreate, PlanningCreateObject, PlanningTransactionBOMInterface, PlanningTransactionLineInterface } from "../../interfaces/planningInterface";
 import PlanningRepo from "./planningRepo";
 import PartNumberRepository from "./partNumberRepository";
+import { AnyARecord } from "dns";
 
 class BomRepo {
     private assemblyRepo: AssemblyLineRepo;
@@ -43,7 +44,7 @@ class BomRepo {
             throw Error('Error while viewing bulk BOMS');
         }
     }
-    public async getBomById(bomId: ObjectId) {
+    public async getBomById(bomId: any) {
         try {
             const bomObject = await BOMModel.findById(bomId);
             if (!bomObject) return null;
@@ -133,7 +134,7 @@ class BomRepo {
             throw Error(`Error while finding ${name} in bom Entity`);
         }
     }
-    public async createWholePlanning(bomId: ObjectId, qty: number): Promise<any[] | null> {
+    public async createWholePlanning(bomId: any, qty: number): Promise<any[] | null> {
         try {
             const getWholeBomObject = await this.createWholeBomImage(bomId, qty);
             const bomObject: any = await this.getBomById(bomId);
@@ -146,7 +147,13 @@ class BomRepo {
                 };
 
                 const plannedMaster: any = await this.planningRepo.createBomPlanning(createBomObject);
-
+                const transactionMaster: PlanningTransactionBOMInterface = {
+                    name: `${bomObject.name}_${new Date().toISOString()}`,
+                    bomId: bomObject._id,
+                    qty: qty,
+                    status: "Locked"
+                }
+                const transactionMasterObject: any = await this.planningRepo.createTransactionParent(transactionMaster);
                 for (const obj of getWholeBomObject) {
                     const assemblyLinePlan: PlanningCreateObject = {
                         name: `${obj.partNumber.name}_${new Date().toISOString()}`,
@@ -156,7 +163,18 @@ class BomRepo {
                     };
                     await this.partNumberRepo.lockPartNumber(assemblyLinePlan.partNumber, assemblyLinePlan.qty);
                     const assemblyLinePlanObject: any = await this.planningRepo.createAsssemblyLine(assemblyLinePlan);
-                    lines.push(assemblyLinePlanObject.toObject());
+                    if (transactionMaster) {
+                        const transactionLineObject: PlanningTransactionLineInterface = {
+                            name: `${obj.partNumber.name}_${new Date().toISOString()}`,
+                            planning_bom_id: transactionMasterObject._id,
+                            assembly_line_id: obj._id,
+                            qty: obj.required_qty * qty,
+                            status: "Locked"
+                        }
+                        const transactionObject: any = await this.planningRepo.createTransactionLine(transactionLineObject);
+                        lines.push(assemblyLinePlanObject.toObject());
+                        await this.planningRepo.pushLineTransaction(transactionObject._id, transactionMasterObject._id);
+                    }
                     await this.planningRepo.pushAssemblyLine(assemblyLinePlanObject._id, plannedMaster._id);
                 }
             }
@@ -169,19 +187,60 @@ class BomRepo {
     public async getPlanningPagedPlanning(page: number, offset: number) {
         try {
             const { bomPlanning, countDocuments } = await this.planningRepo.getBOMsPlanning(page, offset);
-            return { data : bomPlanning, count: countDocuments };
+            return { data: bomPlanning, count: countDocuments };
         } catch (error) {
             throw new Error(`Error during getting from planning repo ${error}`);
         }
     }
-    // public async realsePlannedPlanning(bomId : ObjectId,qty : number){
-    //     try {
-    //         const partNumbersIds = await this.planningRepo.getPartNumberByBomsPlanningById(bomId);
+    public async realsePlannedPlanning(bomId: ObjectId, qty: number) {
+        try {
+            const updatedPartNumbers = [];
+            const partNumbersIds = await this.planningRepo.getPlanningAssemblyLines(bomId, qty);
+            const getBomId: any = await this.planningRepo.getBomIdByPlanningParent(bomId);
 
-    //     } catch (error) {
+            if (getBomId) {
+                const bomObject = await this.getBomById(getBomId);
+                const transactionMaster: PlanningTransactionBOMInterface = {
+                    name: `${bomObject?.name}_${new Date().toISOString()}`,
+                    bomId: getBomId,
+                    qty: qty,
+                    status: "Released"
+                }
+                const transactionMasterObject: any = await this.planningRepo.createTransactionParent(transactionMaster);
+                for (const { partNumber, total, planningLineId, assemblyLine } of partNumbersIds) {
+                    const updatedPartNumber = await this.partNumberRepo.realsePartNumber(partNumber, total);
+                    updatedPartNumbers.push(updatedPartNumber);
+                    await this.planningRepo.updatePlanningEntites(planningLineId, total, bomId);
+                    const partNumeberObject = await this.partNumberRepo.getPartNumberById(partNumber);
+                    if (partNumeberObject && transactionMasterObject) {
+                        const transactionLine: PlanningTransactionLineInterface = {
+                            name: `${partNumeberObject.name}_${new Date().toISOString()}`,
+                            planning_bom_id: transactionMasterObject._id,
+                            assembly_line_id: assemblyLine,
+                            qty: total,
+                            status: "Released"
+                        }
+                        const transactionLineObject: any = await this.planningRepo.createTransactionLine(transactionLine);
+                        await this.planningRepo.pushLineTransaction(transactionLineObject._id, transactionMasterObject._id);
+                    }
+                }
+            }
+            await this.planningRepo.updateBomPlanning(bomId, qty);
+            return updatedPartNumbers;
+        } catch (error) {
+            throw new Error(`Error while updating partnumbers`);
+        }
+    }
 
-    //     }
-    // }
+    public async getTransactionPages(page: number, offset: number, status = "all") {
+        try {
+            const object = await this.planningRepo.getTransactions(page, offset, status);
+
+            return object;
+        } catch (error) {
+            throw new Error(`Error while getting transactions`);
+        }
+    }
 }
 
 export default BomRepo;

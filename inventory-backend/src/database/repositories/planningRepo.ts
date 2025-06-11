@@ -1,7 +1,10 @@
-import { ObjectId } from "mongoose";
-import { BOMPlanningCreate, PlanningCreateObject } from "../../interfaces/planningInterface";
+import { ObjectId, Types } from "mongoose";
+import { BOMPlanningCreate, PlanningCreateObject, PlanningTransactionBOMInterface, PlanningTransactionLineInterface } from "../../interfaces/planningInterface";
 import PlanningBOMModel from "../models/planningBOMModel";
 import PlanningAssemblyLineModel from "../models/planningAssemblyLineModel";
+import mongoose from "mongoose";
+import TransactionLineModel from "../models/transactionLineModel";
+import TransactionParentModel from "../models/transactionParentModel";
 
 class PlanningRepo {
     constructor() { }
@@ -28,39 +31,142 @@ class PlanningRepo {
             throw new Error(`Error while getting BOM planning: ${error}`);
         }
     }
-    public async getPartNumberByBomsPlanningById(id: ObjectId) {
+
+    public async getPlanningAssemblyLines(id: ObjectId, qty: number) {
         try {
-            const planningModel = await PlanningBOMModel.aggregate([
+            const fixedId = new mongoose.Types.ObjectId(id.toString());
+
+            const step5 = await PlanningBOMModel.aggregate([
+                { $match: { _id: fixedId } },
+
                 {
-                    $match: { _id: id }
-                },
-                {
-                    $lookup: {
-                        from: "planning_assembly_line",
-                        localField: "planningLines",
-                        foreignField: "_id",
-                        as: "partNumbers"
+                    $addFields: {
+                        planningLines: {
+                            $map: {
+                                input: "$planningLines",
+                                as: "lineId",
+                                in: { $toObjectId: "$$lineId" }
+                            }
+                        }
                     }
                 },
+
                 {
-                    $unwind: "$partNumbers"
+                    $lookup: {
+                        from: "planning_assembly_lines",
+                        localField: "planningLines",
+                        foreignField: "_id",
+                        as: "planningLinesData"
+                    }
                 },
+
+                { $unwind: "$planningLinesData" },
+
                 {
-                    $group: {
-                        _id: null,
-                        partNumbersIds: { $addToSet: "$partNumbers.partNumber" }
+                    $addFields: {
+                        "planningLinesData.assemblyLine": {
+                            $toObjectId: "$planningLinesData.assemblyLine"
+                        }
+                    }
+                },
+
+                {
+                    $lookup: {
+                        from: "assemblylines",
+                        localField: "planningLinesData.assemblyLine",
+                        foreignField: "_id",
+                        as: "assemblyLine"
+                    }
+                },
+
+                { $unwind: "$assemblyLine" },
+                {
+                    $addFields: {
+                        total: {
+                            $multiply: [
+                                { $toInt: "$assemblyLine.required_qty" },
+                                Number(qty)
+                            ]
+                        }
                     }
                 },
                 {
                     $project: {
-                        _id: 0,
-                        partNumbersIds: 1
+                        planningLineId: "$assemblyLine._id",
+                        partNumber: "$assemblyLine.partNumber",
+                        assemblyLine: "$assemblyLine._id",
+                        total: 1
                     }
                 }
             ]);
-            return planningModel[0]?.partNumbersIds ?? [];
+
+            return step5;
         } catch (error) {
-            throw new Error(`Error while getting BOM planning by Id: ${error}`);
+            console.error("❌ Aggregation Error:", error);
+            throw error;
+        }
+    }
+    public async getBomIdByPlanningParent(id: ObjectId) {
+        try {
+            const bomDoc = await PlanningBOMModel.findById(id).lean();
+            return bomDoc?.bomId;
+        } catch (error) {
+            console.error("Error in getBomIdByPlanningParent:", error);
+            throw new Error("Error while getting BOM from planning parent");
+        }
+    }
+
+    public async updateBomPlanning(id: ObjectId, qty: number) {
+        try {
+            const findBomPlanning = await PlanningBOMModel.findOneAndUpdate(
+                { _id: id },
+                {
+                    $inc: { qty: -qty }
+                },
+                { new: true }
+            );
+
+            if (findBomPlanning && findBomPlanning.qty <= 0) {
+                await PlanningAssemblyLineModel.deleteMany({
+                    _id: { $in: findBomPlanning.planningLines }
+                });
+                await PlanningBOMModel.findOneAndDelete({ _id: id });
+
+                return true;
+            }
+
+            return true;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async updatePlanningEntites(id: ObjectId, qty: number, bomId: ObjectId) {
+        try {
+            const updatePlanningEntity = await PlanningAssemblyLineModel.findOneAndUpdate(
+                { _id: id },
+                {
+                    $inc: { qty: -qty }
+                },
+                { new: true }
+            );
+            if (updatePlanningEntity && updatePlanningEntity.qty <= 0) {
+
+                await PlanningAssemblyLineModel.findOneAndDelete(id);
+
+                const updatedBom = await PlanningBOMModel.findByIdAndUpdate(
+                    bomId,
+                    { $pull: { planningLines: id } },
+                    { new: true }
+                );
+                if (updatedBom && updatedBom.planningLines.length == 0) {
+                    await PlanningBOMModel.findByIdAndDelete(bomId);
+                }
+                return true;
+            }
+            return true;
+        } catch (error) {
+            throw error;
         }
     }
     public async pushAssemblyLine(assemblyLinePlanning: ObjectId, bomPlanning: ObjectId) {
@@ -85,6 +191,76 @@ class PlanningRepo {
             return assemblyLine;
         } catch (error) {
             throw new Error(`Error while creating planning line`);
+        }
+    }
+
+    public async createTransactionLine(createTransactionLine: PlanningTransactionLineInterface) {
+        try {
+            const createTransactionLineObject = await TransactionLineModel.create(createTransactionLine);
+            return createTransactionLineObject.toObject();
+        } catch (error) {
+            console.log(error);
+            throw new Error(`Error while creating transaction planning line`);
+        }
+    }
+    public async pushLineTransaction(transactionChildId: ObjectId, parentModelId: any) {
+        try {
+            const updateParentTransaction = await TransactionParentModel.findByIdAndUpdate(
+                parentModelId,
+                {
+                    $push: {
+                        child_planning_transaction: transactionChildId
+                    }
+                },
+                { new: true }
+            );
+            return updateParentTransaction;
+        } catch (error) {
+            console.error("Failed to push child transaction:", error);
+            throw error;
+        }
+    }
+    public async createTransactionParent(planningParentObject: PlanningTransactionBOMInterface) {
+        try {
+            const createParent = await TransactionParentModel.create(planningParentObject);
+            return createParent.toObject();
+        } catch (error) {
+            throw new Error(`Error while creating parent model`)
+        }
+    }
+    public async getTransactionByBomId(bomId: ObjectId) {
+        try {
+            const getTransactions = await TransactionParentModel.find({
+                bomId,
+            })
+                .populate("child_planning_transaction")
+                .lean();
+            return getTransactions;
+        } catch (error) {
+            throw new Error(`Error while getting Transactions`);
+        }
+    }
+    public async getTransactions(page: number, offset: number, status: any) {
+        try {
+            const filter: any = {};
+            if (status !== 'all' && status !== 'null') {
+                filter.status = status;
+            }
+            console.log(filter,"status")
+            const totalCount = await TransactionParentModel.find(filter)
+                .lean().countDocuments();
+
+            const getTransactions = await TransactionParentModel.find(filter)
+                .populate("bomId")
+                .populate("child_planning_transaction")
+                .skip((page - 1) * offset)
+                .limit(offset)
+                .lean();
+
+            return { getTransactions, totalCount };
+        } catch (error) {
+            console.error("Error in getTransactions:", error);
+            throw new Error("Error while getting Transactions");
         }
     }
 }

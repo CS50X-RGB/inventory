@@ -5,6 +5,7 @@ import BOMMiddleware from "../middleware/bomMiddleware";
 import AssemblyLineService from "../services/assemblyLineService";
 import { uploadFile } from "../utils/upload";
 import ImporterService from "../services/importerService";
+import BomRepo from "../database/repositories/bomRepo";
 
 const router = Router();
 const userMiddlewate = new UserMiddleware();
@@ -29,4 +30,8 @@ router.post("/import",
 );
 router.post("/plan/create/:bomId",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.createWholeBomPlanning.bind(bomService));
 router.get("/plan/get/:page/:offset",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.getPlanningModels.bind(bomService));
+router.get("/plan/get/transaction/:page/:offset",bomService.getTransactions.bind(bomService));
+router.put("/plan/realse/:bomId",bomMiddleware.checkBomId.bind(bomMiddleware),bomService.realseBomQty.bind(bomService));
+router.post("/plan/multi",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.getAllBOMWholeImage.bind(bomService));
+router.post("/plan/lock/all",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.getPlanningModelsForAll.bind(bomService));
 export default router;
