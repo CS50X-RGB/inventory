@@ -48,7 +48,18 @@ export default function ShowTableData({
     loadingState,
     data,
 }: CustomTableProps) {
-
+    const deleteBomById = useMutation({
+        mutationKey : ["deleteBomById"],
+        mutationFn : async (data : any) => {
+            return await deleteData(`${bomRoutes.deleteBomById}${data._id}`,{});
+        },
+        onSuccess : () => {
+            toast.success("Top Level Deleted",{
+                position: "top-left",
+            });
+            queryClient.invalidateQueries();
+        }
+    })
     const deleteById = useMutation({
         mutationKey: ["deletebyId"],
         mutationFn: async (id: any) => {
@@ -233,7 +244,8 @@ export default function ShowTableData({
                 );
             case "Bom_Action":
                 return (
-                    <div className="flex flex-row">
+                    <div className="flex flex-row w-full gap-4">
+                        <Delete className={"size-4 fill-red-400 cursor-pointer"} onClick={() => deleteBomById.mutate(item)}/>
                         <EyeIcon className="size-4 cursor-pointer" onClick={() => router.push(`/admin/bom/view/${item._id}`)} />
                     </div>
                 );

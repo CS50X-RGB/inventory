@@ -5,7 +5,7 @@ import AssemblyLineRepo from "./assemblyLineRepo";
 import { BOMPlanningCreate, PlanningCreateObject, PlanningTransactionBOMInterface, PlanningTransactionLineInterface } from "../../interfaces/planningInterface";
 import PlanningRepo from "./planningRepo";
 import PartNumberRepository from "./partNumberRepository";
-import { AnyARecord } from "dns";
+
 
 class BomRepo {
     private assemblyRepo: AssemblyLineRepo;
@@ -22,6 +22,14 @@ class BomRepo {
             return createBOM.toObject();
         } catch (error) {
             throw new Error(`Error while creating Bom`);
+        }
+    }
+    public async countBoms(){
+        try {
+            const countBoms = await BOMModel.countDocuments();
+            return countBoms;
+        } catch (error) {
+            throw new Error(`Error while getting count of boms`);
         }
     }
     public async getBoms(page: number, offset: number, search?: string) {
@@ -41,7 +49,7 @@ class BomRepo {
                 count
             };
         } catch (error) {
-            throw Error('Error while viewing bulk BOMS');
+            throw new Error('Error while viewing bulk BOMS');
         }
     }
     public async getBomById(bomId: any) {
@@ -229,6 +237,32 @@ class BomRepo {
             return updatedPartNumbers;
         } catch (error) {
             throw new Error(`Error while updating partnumbers`);
+        }
+    }
+    public async deleteByBomId(bomId: any) {
+        try {
+            const planning = await this.planningRepo.deletePlanningByBomId(bomId);
+            const transaction = await this.planningRepo.deleteTransactionByBomId(bomId);
+
+            // Get sub-assemblies
+            const sub_assembly = await this.createWholeBomImage(bomId, 1);
+            const child_ids: any[] = sub_assembly?.map((assembly: any) => assembly._id) || [];
+
+            // Delete sub-assemblies
+            if (child_ids.length > 0) {
+                await this.assemblyRepo.deleteSubAssembly(child_ids);
+            }
+
+            const bomObject = await BOMModel.findByIdAndDelete(bomId);
+            const bomDeletedId = bomObject?._id || null;
+            return {
+                deletedPlanningIds: planning,
+                deletedTransactionIds: transaction,
+                deletedSubAssemblyIds: child_ids,
+                deletedBomId: bomDeletedId,
+            };
+        } catch (error) {
+            throw new Error("Full BOM deletion failed");
         }
     }
 

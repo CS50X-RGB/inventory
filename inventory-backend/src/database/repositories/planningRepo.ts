@@ -141,6 +141,98 @@ class PlanningRepo {
         }
     }
 
+    public async deletePlanningByBomId(id: any) {
+        try {
+            const planningMaster = await PlanningBOMModel.find({ bomId: id });
+
+            if (planningMaster.length === 0) {
+                return {
+                    deletedParentIds: [],
+                    deletedChildIds: [],
+                };
+            }
+
+            const childIds: any[] = planningMaster.flatMap(
+                (planning: any) => planning.planningLines || []
+            );
+
+            // Delete child planning lines
+            if (childIds.length > 0) {
+                await PlanningAssemblyLineModel.deleteMany({
+                    _id: { $in: childIds },
+                });
+            }
+
+            const parentIds = planningMaster.map(planning => planning._id);
+
+            await PlanningBOMModel.deleteMany({
+                _id: { $in: parentIds },
+            });
+
+            return [...parentIds, ...childIds];
+        } catch (error) {
+            console.error("Error deleting planning by BOM ID:", error);
+            throw new Error("Failed to delete planning data");
+        }
+    }
+
+    public async getStatusCount() {
+        try {
+            const result = await TransactionParentModel.aggregate([
+                {
+                    $match: {
+                        status: { $in: ["Locked", "Released"] },
+                    },
+                },
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 },
+                    },
+                },
+            ]);
+            const statusCount: Record<string, number> = {};
+            for (const item of result) {
+                statusCount[item._id] = item.count;
+            }
+
+            return statusCount;
+        } catch (error) {
+            console.error("Failed to get status count:", error);
+            throw new Error("Unable to fetch status counts");
+        }
+    }
+
+    public async deleteTransactionByBomId(id: ObjectId) {
+        try {
+            const transactionMaster = await TransactionParentModel.find({ bomId: id });
+
+            if (transactionMaster.length === 0) {
+                return [];
+            }
+
+            const childIds: ObjectId[] = transactionMaster.flatMap(
+                (transaction: any) => transaction.child_planning_transaction || []
+            );
+
+            if (childIds.length > 0) {
+                await TransactionLineModel.deleteMany({
+                    _id: { $in: childIds },
+                });
+            }
+            const parentIds = transactionMaster.map(transaction => transaction._id);
+
+            await TransactionParentModel.deleteMany({
+                _id: { $in: parentIds },
+            });
+
+            return [...parentIds, ...childIds];
+        } catch (error) {
+            console.error("Failed to delete transactions:", error);
+            throw new Error("Transaction deletion failed");
+        }
+    }
+
     public async updatePlanningEntites(id: ObjectId, qty: number, bomId: ObjectId) {
         try {
             const updatePlanningEntity = await PlanningAssemblyLineModel.findOneAndUpdate(
@@ -246,7 +338,7 @@ class PlanningRepo {
             if (status !== 'all' && status !== 'null') {
                 filter.status = status;
             }
-            console.log(filter,"status")
+            console.log(filter, "status")
             const totalCount = await TransactionParentModel.find(filter)
                 .lean().countDocuments();
 

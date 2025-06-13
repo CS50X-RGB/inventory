@@ -13,7 +13,7 @@ export default function ViewBOMS() {
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
     const { data: getBom, isFetching, isFetched } = useQuery({
-        queryKey: ["getPartNumbers", page, debouncedSearch],
+        queryKey: ["getTlas", page, debouncedSearch],
         queryFn: async () => {
             return getData(`${bomRoutes.getBom}/${page}/10?search=${debouncedSearch}`, {});
         }

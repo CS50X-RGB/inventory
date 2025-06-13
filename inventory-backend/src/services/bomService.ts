@@ -97,10 +97,6 @@ class BomService {
         try {
             let { bomId }: any = req.body;
 
-            // if (bomId instanceof Set) {
-            //     bomId = Array.from(bomId);
-            // }
-
             const allBOMs: any[] = [];
             const partStockMap: Map<string, number> = new Map();
 
@@ -118,7 +114,6 @@ class BomService {
                     }
                 }
             }
-            console.log(partStockMap, "map");
             // Pass 2: Process each BOM, sum same part quantities
             for (const id of bomId) {
                 const wholeBomObject = await this.bomRepo.createWholeBomImage(id, 1);
@@ -155,7 +150,6 @@ class BomService {
                         partStockMap.set(partId, remaining);
                     }
                 }
-                console.log("after", partStockMap);
 
                 allBOMs.push({
                     bomId: id,
@@ -170,7 +164,16 @@ class BomService {
             return res.sendError(error, "Error occurred during fetching BOMs", 400);
         }
     }
-
+    
+    public async deleteBomEntries(req : Request,res : Response){
+        try{
+            const { bomId } : any = req.params;
+            const deleteBomObject = await this.bomRepo.deleteByBomId(bomId);
+            return res.sendArrayFormatted(deleteBomObject,"Deleted Bom Object Succesffully",200);
+        }catch(error){
+            return res.sendError(error,"Error while deleting the bom object",400);
+        }
+    }
     public async createWholeBomPlanning(req: Request, res: Response) {
         try {
             const bomId: any = req.params.bomId;

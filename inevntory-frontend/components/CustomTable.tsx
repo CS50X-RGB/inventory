@@ -17,7 +17,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import Delete from "@/public/Icons/Delete";
 import { deleteData, putData } from "@/core/api/apiHandler";
-import { accountRoutes } from "@/core/api/apiRoutes";
+import { accountRoutes,bomRoutes } from "@/core/api/apiRoutes";
 import { queryClient } from "@/app/providers";
 
 import { toast } from "sonner";
@@ -42,6 +42,12 @@ export default function CustomTable({
   loadingState,
   data,
 }: CustomTableProps) {
+  const deleteBomById = useMutation({
+    mutationKey : ["deleteBomById"],
+    mutationFn : async (data : any) => {
+      return await deleteDalta(`${bomRoutes.deleteBomById}${data._id}`,{},{});
+    }
+  });
   const deleteById = useMutation({
     mutationKey: ["deletebyId"],
     mutationFn: async (id: any) => {
@@ -57,6 +63,7 @@ export default function CustomTable({
       toast.error("Error caused while deleting user");
     },
   });
+  
   const updateBlockById = useMutation({
     mutationKey: ["updateBlockyId"],
     mutationFn: async (id: any) => {

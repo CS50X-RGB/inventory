@@ -158,7 +158,24 @@ class PartNumberRepository {
             throw new Error("Error while getting part number");
         }
     }
-
+    public async countPartNumber(){
+        try {
+            const countPartNumbers = await PartNumberModel.countDocuments();
+            return countPartNumbers;
+        } catch (error) {
+            throw new Error(`Error while counting part Number`);
+        }
+    }
+    public async getZeroPartCountNumbers(){
+        try {
+            const countZeroInStock = await PartNumberModel.find({
+                in_stock : 0
+            }).countDocuments();
+            return countZeroInStock;
+        } catch (error) {
+            throw new Error('Error Count With 0 Part Number')
+        }
+    }
 }
 
 export default PartNumberRepository;

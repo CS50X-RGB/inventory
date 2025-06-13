@@ -11,7 +11,7 @@ const app = express();
 
 
 app.use(cors({
-   origin: ['http://localhost:3000', 'https://inventory-r6r4.vercel.app'],
+   origin: ['http://localhost:3000', 'https://inventory-r6r4.vercel.app','http://69.62.74.187:3000','https://inventory.swyftcore.in'],
    methods: ['GET', 'POST', 'PUT', 'DELETE'],
    credentials: true
 }));

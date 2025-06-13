@@ -34,9 +34,14 @@ export const bomRoutes = {
   getTransaction : "/bom/plan/get/transaction",
   multiInfor: "/bom/plan/multi",
   lockPlanForAll : "/bom/plan/lock/all",
-  realsePlanning : "/bom/plan/realse/"
+  realsePlanning : "/bom/plan/realse/",
+  deleteBomById : "/bom/delete/"
 }
 
 export const uomRoutes = {
   getAllUom : "/uom/all"
+}
+
+export const analyticsRoutes = {
+  getData : "/analytics/getCount"
 }

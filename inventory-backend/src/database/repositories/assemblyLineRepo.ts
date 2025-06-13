@@ -55,7 +55,17 @@ class AssemblyLineRepo {
             throw new Error(`Error while fetching Assembly Line`);
         }
     }
-
+    public async deleteSubAssembly(assemblyIds : any){
+        try {
+            const assemblyLines = await AssemblyLineModel.deleteMany({
+                _id : { $in : assemblyIds }
+            });
+            return assemblyLines;
+        } catch (error) {
+            console.error("Error while deleting assemblylines",error);
+            return null;
+        }
+    }
     public async getAllChildrenFlat(subAssemblyById: ObjectId, qty: any): Promise<any[]> {
         const allChildren: any[] = [];
 
