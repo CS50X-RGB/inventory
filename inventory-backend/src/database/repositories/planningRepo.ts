@@ -6,8 +6,8 @@ import mongoose from "mongoose";
 import TransactionLineModel from "../models/transactionLineModel";
 import TransactionParentModel from "../models/transactionParentModel";
 
+
 class PlanningRepo {
-    constructor() { }
     public async createBomPlanning(planningObject: BOMPlanningCreate) {
         try {
             const planning = await PlanningBOMModel.create(planningObject);
@@ -29,6 +29,54 @@ class PlanningRepo {
             return { bomPlanning, countDocuments };
         } catch (error) {
             throw new Error(`Error while getting BOM planning: ${error}`);
+        }
+    }
+
+    public async getTotalPlanning() {
+        try {
+            const rawResult = await TransactionParentModel.aggregate([
+                {
+                    $lookup: {
+                        from: "boms",
+                        localField: "bomId",
+                        foreignField: "_id",
+                        as: "bom"
+                    }
+                },
+                {
+                    $unwind: "$bom"
+                },
+                {
+                    $group: {
+                        _id: "$bom.name",
+                        totalValue: { $sum: { $multiply: ["$bom.total_price", "$qty"] } },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $project: {
+                        name: "$_id",
+                        count: 1,
+                        totalValue: 1,
+                        _id: 0
+                    }
+                }
+            ]);
+            const statusCount: Record<string, Record<number, number>> = {};
+
+            for (const item of rawResult) {
+                statusCount[item.name] = {
+                    [item.count]: item.totalValue
+                };
+            }
+
+            return {
+                total: Object.keys(statusCount).length,
+                statusCount
+            }
+
+        } catch (error) {
+            throw new Error(`Error while gettin stats of boms`);
         }
     }
 
@@ -203,6 +251,62 @@ class PlanningRepo {
         }
     }
 
+
+    public async getStatusPercentageCount() {
+        try {
+            const result = await TransactionParentModel.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        total: { $sum: 1 },
+                        released: {
+                            $sum: {
+                                $cond: [
+                                    {
+                                        $in: ["$status", ["Released"]]
+                                    },
+                                    1,
+                                    0
+                                ]
+                            }
+                        },
+                        locked: {
+                            $sum: {
+                                $cond: [
+                                    {
+                                        $in: ["$status", ["Locked"]]
+                                    },
+                                    1,
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        locked: {
+                            $multiply: [
+                                { $divide: ["$locked", "$total"] },
+                                100
+                            ],
+                        },
+                        realsed: {
+                            $multiply: [
+                                { $divide: ["$released", "$total"] },
+                                100
+                            ],
+                        },
+                    }
+                }
+            ]);
+            return result;
+        } catch (error) {
+            throw new Error(`Error while getting percentage of realsed and locked qty`);
+        }
+    }
+
     public async deleteTransactionByBomId(id: ObjectId) {
         try {
             const transactionMaster = await TransactionParentModel.find({ bomId: id });
@@ -355,6 +459,32 @@ class PlanningRepo {
             throw new Error("Error while getting Transactions");
         }
     }
+    public async getTransactionsByBomName(id: string, page: number, offset: number, status: string) {
+        try {
+            const filter: any = {
+                bomId: id
+            };
+
+            if (status !== 'all' && status !== 'null') {
+                filter.status = status;
+            }
+
+            const totalCount = await TransactionParentModel.countDocuments(filter);
+
+            const getTransactions = await TransactionParentModel.find(filter)
+                .populate("bomId")
+                .populate("child_planning_transaction")
+                .skip((page - 1) * offset)
+                .limit(offset)
+                .lean();
+
+            return { getTransactions, totalCount };
+        } catch (error) {
+            console.error("Error in getTransactions:", error);
+            throw new Error("Error while getting Transactions");
+        }
+    }
+
 }
 
 export default PlanningRepo;

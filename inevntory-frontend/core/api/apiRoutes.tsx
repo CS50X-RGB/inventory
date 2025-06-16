@@ -30,7 +30,7 @@ export const bomRoutes = {
   getSubAssemblyDetails : '/bom/child',
   addSubAssembly : '/bom/create/sub',
   getSingleBom : "/bom/single/",
-  getPlanning : "/bom/plan/get",
+  getPlanning : "/bom/plan/get/transaction",
   getTransaction : "/bom/plan/get/transaction",
   multiInfor: "/bom/plan/multi",
   lockPlanForAll : "/bom/plan/lock/all",
@@ -43,5 +43,6 @@ export const uomRoutes = {
 }
 
 export const analyticsRoutes = {
-  getData : "/analytics/getCount"
+  getData : "/analytics/getCount",
+  getPlanning : "/analytics/getPlanning",
 }

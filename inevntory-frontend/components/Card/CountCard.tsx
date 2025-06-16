@@ -1,6 +1,6 @@
 import { Card, CardBody } from "@heroui/card";
 
-type CountCardProps = {
+export interface CountCardProps {
   label: string;
   value: number;
 };

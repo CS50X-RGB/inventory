@@ -30,6 +30,7 @@ router.post("/import",
 router.post("/plan/create/:bomId",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.createWholeBomPlanning.bind(bomService));
 router.get("/plan/get/:page/:offset",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.getPlanningModels.bind(bomService));
 router.get("/plan/get/transaction/:page/:offset",bomService.getTransactions.bind(bomService));
+router.get("/plan/get/transaction/:name/:page/:offset",bomService.getTransactionsByBomName.bind(bomService));
 router.put("/plan/realse/:bomId",bomMiddleware.checkBomId.bind(bomMiddleware),bomService.realseBomQty.bind(bomService));
 router.post("/plan/multi",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.getAllBOMWholeImage.bind(bomService));
 router.post("/plan/lock/all",userMiddlewate.verifyAdmin.bind(userMiddlewate),bomService.getPlanningModelsForAll.bind(bomService));

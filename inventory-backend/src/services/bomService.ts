@@ -139,7 +139,7 @@ class BomService {
                         const possibleBuilds = Math.floor(availableStock / totalRequiredQty);
                         maxCanBuild = Math.min(maxCanBuild, possibleBuilds);
                         if (partId === "2078193") {
-                            console.log(availableStock,"avail",possibleBuilds,"maxi");
+                            console.log(availableStock, "avail", possibleBuilds, "maxi");
                         }
                     }
 
@@ -164,14 +164,14 @@ class BomService {
             return res.sendError(error, "Error occurred during fetching BOMs", 400);
         }
     }
-    
-    public async deleteBomEntries(req : Request,res : Response){
-        try{
-            const { bomId } : any = req.params;
+
+    public async deleteBomEntries(req: Request, res: Response) {
+        try {
+            const { bomId }: any = req.params;
             const deleteBomObject = await this.bomRepo.deleteByBomId(bomId);
-            return res.sendArrayFormatted(deleteBomObject,"Deleted Bom Object Succesffully",200);
-        }catch(error){
-            return res.sendError(error,"Error while deleting the bom object",400);
+            return res.sendArrayFormatted(deleteBomObject, "Deleted Bom Object Succesffully", 200);
+        } catch (error) {
+            return res.sendError(error, "Error while deleting the bom object", 400);
         }
     }
     public async createWholeBomPlanning(req: Request, res: Response) {
@@ -242,6 +242,24 @@ class BomService {
             const object = await this.bomRepo.getTransactionPages(page, offset, status);
 
             return res.sendArrayFormatted(object, "Fetched Planning Entites", 200);
+        } catch (error) {
+            return res.sendError('Error while getting planning', 'Error while getting planning', 400);
+        }
+    }
+
+    public async getTransactionsByBomName(req: Request, res: Response) {
+        try {
+            const page = parseInt(req.params.page, 10);
+            const offset = parseInt(req.params.offset, 10);
+            const status = req.query.status as string;
+            const name = req.params.name as string;
+            if (isNaN(page) || isNaN(offset)) {
+                return res.sendError("Error", "error", 400);
+            }
+
+            const object = await this.bomRepo.getTransactionByBomNamePages(name,page, offset, status);
+
+            return res.sendArrayFormatted(object, "Fetched Planning Entites By Name", 200);
         } catch (error) {
             return res.sendError('Error while getting planning', 'Error while getting planning', 400);
         }

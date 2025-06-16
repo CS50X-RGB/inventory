@@ -24,7 +24,7 @@ class BomRepo {
             throw new Error(`Error while creating Bom`);
         }
     }
-    public async countBoms(){
+    public async countBoms() {
         try {
             const countBoms = await BOMModel.countDocuments();
             return countBoms;
@@ -70,6 +70,30 @@ class BomRepo {
             throw new Error(`Error caused by finding Bom`);
         }
     }
+
+    public async getBomByName(name: string) {
+        try {
+            const bomObject: any = await BOMModel.findOne(
+                {
+                    name
+                }
+            );
+            if (!bomObject) return null;
+            if (bomObject.sub_line.length > 0) {
+                await bomObject.populate({
+                    path: "sub_line",
+                    populate: [
+                        { path: "uom" },
+                        { path: "partNumber" }
+                    ]
+                });
+            }
+            return bomObject.toObject();
+        } catch (error: any) {
+            throw new Error(`Error caused by finding Bom`);
+        }
+    }
+
     public async getBOMBySearch(name: string): Promise<any | null> {
         try {
             let query = {};
@@ -275,6 +299,16 @@ class BomRepo {
             throw new Error(`Error while getting transactions`);
         }
     }
+    public async getTransactionByBomNamePages(name : string,page: number, offset: number, status = "all") {
+        try {
+            const bomObject = await this.getBomsByName(name);
+            const object = await this.planningRepo.getTransactionsByBomName(bomObject._id,page, offset, status);
+            return object;
+        } catch (error) {
+            throw new Error(`Error while getting transactions`);
+        }
+    }
 }
+
 
 export default BomRepo;

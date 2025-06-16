@@ -55,14 +55,14 @@ class AssemblyLineRepo {
             throw new Error(`Error while fetching Assembly Line`);
         }
     }
-    public async deleteSubAssembly(assemblyIds : any){
+    public async deleteSubAssembly(assemblyIds: any) {
         try {
             const assemblyLines = await AssemblyLineModel.deleteMany({
-                _id : { $in : assemblyIds }
+                _id: { $in: assemblyIds }
             });
             return assemblyLines;
         } catch (error) {
-            console.error("Error while deleting assemblylines",error);
+            console.error("Error while deleting assemblylines", error);
             return null;
         }
     }
@@ -98,7 +98,7 @@ class AssemblyLineRepo {
         try {
             const assemblyLine = await AssemblyLineModel
                 .findOne({ name })
-                .sort({ createdAt: -1 }); 
+                .sort({ createdAt: -1 });
             return assemblyLine;
         } catch (error) {
             throw Error(`Error while getting assembly line`);
@@ -119,6 +119,52 @@ class AssemblyLineRepo {
         } catch (error) {
             console.error("Error in getBOMIdByLevel:", error);
             return null;
+        }
+    }
+
+    public async getPartNumberCount() {
+        try {
+            const result = await AssemblyLineModel.aggregate([
+                {
+                    $group: {
+                        _id: "$partNumber",
+                        count: { $sum: 1 },
+                    },
+                },
+                {
+                    $sort: { count: 1 },
+                },
+                {
+                    $lookup: {
+                        from: "partnumbers",
+                        localField: "_id",
+                        foreignField: "_id",
+                        as: "part",
+                    },
+                },
+                {
+                    $unwind: "$part",
+                },
+                {
+                    $project: {
+                        partName: "$part.name",
+                        count: 1,
+                    },
+                },
+            ]);
+
+
+            const total: Record<string, number> = {};
+            for (const item of result) {
+                total[item.partName] = item.count;
+            }
+
+            return {
+                total : Object.keys(total).length,
+                partNumber : total
+            };
+        } catch (error) {
+            throw new Error("Error while getting part numbers");
         }
     }
 
