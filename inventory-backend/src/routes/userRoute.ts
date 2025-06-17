@@ -13,7 +13,7 @@ router.post('/signin',
     userService.signUpUser.bind(userService)
 );
 router.post('/create',
-    userMiddleware.verifyAdmin.bind(userMiddleware),
+   // userMiddleware.verifyAdmin.bind(userMiddleware),
     userMiddleware.createUser.bind(userMiddleware),
     userService.createUser.bind(userService)
 );
@@ -22,4 +22,5 @@ router.get('/my/user',userMiddleware.verify.bind(userMiddleware),userService.get
 router.get('/all-users',userMiddleware.verifyAdmin.bind(userMiddleware),userService.getAllUsers.bind(userService));
 router.delete('/remove/:id',userMiddleware.deleteId.bind(userMiddleware),userService.deleteById.bind(userService));
 router.put('/block/:id',userMiddleware.deleteId.bind(userMiddleware),userService.updateIsBlocked.bind(userService));
+router.put("/update/:id",userService.updateUser.bind(userService));
 export default router;

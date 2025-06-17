@@ -43,66 +43,71 @@ export default function Page() {
         <Spinner />
       </div>
     )
-  }
-  console.log(getPlanningAnalytics?.data.data.total[0])
-  return (
-    <div className="flex flex-col gap-4 p-4">
+  } else {
 
-      <div className="flex flex-wrap gap-4 flex-row w-full justify-center items-center">
-        {getAnalytics?.data?.data &&
-          Object.entries(getAnalytics.data.data).map(([key, value]: [any, any], index: number) => (
-            <CountCard key={index} label={key} value={value} />
-          ))}
-        <div className="flex flex-row-reverse items-center gap-4 justify-around w-full">
-          <div className="w-1/3 gap-4 flex flex-col h-full">
-            <GraphCard label="Total Planning" value={getPlanningAnalytics?.data?.data?.planning?.total}>
-              <PieChart title="Planning Stats" data={getPlanningAnalytics?.data?.data?.planning?.statusCount} />
-            </GraphCard>
-            <Card className="p-4 border border-white">
-              <CardHeader className="text-2xl font-bold">Percentage Split of All Transactions</CardHeader>
-              <CardBody className="flex flex-row w-full h-[200px]">
-                <div
-                  style={{
-                    width: `${getPlanningAnalytics?.data?.data?.total[0]?.locked || 0}%`,
-                  }}
-                  className="flex rounded-l-full items-center justify-center h-full bg-blue-400"
-                >
-                  <h1 className="font-bold text-sm text-black text-center">
-                    Locked {Math.round(getPlanningAnalytics?.data?.data?.total[0]?.locked)}%
-                  </h1>
-                </div>
-                <div
-                  style={{
-                    width: `${getPlanningAnalytics?.data?.data?.total[0]?.realsed || 0}%`,
-                  }}
-                  className="flex rounded-r-full items-center justify-center h-full bg-green-400"
-                >
-                  <h1 className="font-bold text-sm text-black text-center">
-                    Released {Math.round(getPlanningAnalytics?.data?.data?.total[0]?.realsed)}%
-                  </h1>
-                </div>
+    return (
+      <div className="flex flex-col gap-4 p-4">
+
+        <div className="flex flex-wrap gap-4 flex-row w-full justify-center items-center">
+          {getAnalytics?.data?.data &&
+            Object.entries(getAnalytics.data.data).map(([key, value]: [any, any], index: number) => (
+              <CountCard key={index} label={key} value={value} />
+            ))}
+          <div className="flex flex-row-reverse items-center gap-4 justify-around w-full">
+            <div className="w-1/3 gap-4 flex flex-col h-full">
+              <GraphCard label="Total Planning" value={getPlanningAnalytics?.data?.data?.planning?.total}>
+                {getPlanningAnalytics?.data.data && (
+                  <PieChart title="Planning Stats" data={getPlanningAnalytics?.data?.data?.planning?.statusCount} />
+                )}
+              </GraphCard>
+              <Card className="p-4 border border-white">
+                <CardHeader className="text-2xl font-bold">Percentage Split of All Transactions</CardHeader>
+                <CardBody className="flex flex-row w-full h-[200px]">
+                  <div
+                    style={{
+                      width: `${getPlanningAnalytics?.data?.data?.total[0]?.locked || 0}%`,
+                    }}
+                    className="flex rounded-l-full items-center justify-center h-full bg-blue-400"
+                  >
+                    <h1 className="font-bold text-sm text-black text-center">
+                      Locked {Math.round(getPlanningAnalytics?.data?.data?.total[0]?.locked)}%
+                    </h1>
+                  </div>
+                  <div
+                    style={{
+                      width: `${getPlanningAnalytics?.data?.data?.total[0]?.realsed || 0}%`,
+                    }}
+                    className="flex rounded-r-full items-center justify-center h-full bg-green-400"
+                  >
+                    <h1 className="font-bold text-sm text-black text-center">
+                      Released {Math.round(getPlanningAnalytics?.data?.data?.total[0]?.realsed)}%
+                    </h1>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
+            <Card className="w-1/2 border border-white">
+              <CardHeader className="p-4 font-bold text-2xl">Part Number Frequency</CardHeader>
+              <CardBody>
+                {getPlanningAnalytics?.data.data && (
+                  <BarGraph title="Most Used Part Number" data={getPlanningAnalytics?.data?.data?.partNumber?.partNumber} />
+                )}
               </CardBody>
             </Card>
           </div>
-          <Card className="w-1/2 border border-white">
-            <CardHeader className="p-4 font-bold text-2xl">Part Number Frequency</CardHeader>
-            <CardBody>
-              <BarGraph title="Most Used Part Number" data={getPlanningAnalytics?.data?.data?.partNumber?.partNumber} />
-            </CardBody>
-          </Card>
-        </div>
 
+        </div>
+        <div className="flex flex-col gap-4 w-full">
+          <h1 className="font-bold text-xl">View Users</h1>
+          <CustomTable
+            data={getAllUsers?.data.data.users}
+            loadingState={isFetching}
+            page={page}
+            setPage={setPage}
+            pages={1}
+          />
+        </div>
       </div>
-      <div className="flex flex-col gap-4 w-full">
-        <h1 className="font-bold text-xl">View Users</h1>
-        <CustomTable
-          data={getAllUsers?.data.data.users}
-          loadingState={isFetching}
-          page={page}
-          setPage={setPage}
-          pages={1}
-        />
-      </div>
-    </div>
-  );
+    );
+  }
 }

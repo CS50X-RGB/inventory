@@ -1,7 +1,7 @@
 import RoleRepository from "../database/repositories/roleRepository";
 import UserRepository from "../database/repositories/userRepository";
 import { ADMIN_EMAIL, ADMIN_USER, ADMIN_PASS } from "../config/config";
-import { IUserCreate, IUserCreateReturn, IUserLogin,IUserSignin } from "../interfaces/userInterface";
+import { IUserCreate, IUserCreateReturn, IUserLogin, IUserSignin } from "../interfaces/userInterface";
 import { createToken, hashPassword, isMatch } from "../helpers/encrypt";
 import { Response, Request } from "express";
 
@@ -65,6 +65,46 @@ class UserService {
             }
         } catch (e) {
             throw new Error(`Error in Login`);
+        }
+    }
+    public async updateUser(req: Request, res: Response) {
+        try {
+            const { id } : any = req.params;
+            const existingUser = await this.userRepository.getUserById(id);
+
+            if (!existingUser) {
+                return res.sendError("User not found", "Error while updating user", 404);
+            }
+
+            const user: Partial<IUserCreate> = req.body;
+            let updateObject: Partial<IUserCreate> = {};
+
+            if (user.name) {
+                updateObject.name = user.name;
+            }
+
+            if (user.password) {
+                const hashedPassword = await hashPassword(user.password);
+                updateObject.password = hashedPassword;
+            }
+
+            if (user.email) {
+                updateObject.email = user.email;
+            }
+
+            if (user.role) {
+                updateObject.role = user.role;
+            }
+
+            const success = await this.userRepository.updateUser(id, updateObject);
+
+            if (!success) {
+                return res.sendError("Update failed", "Unable to update user", 500);
+            }
+
+            return res.sendFormatted("User updated successfully", "User Updated", 200);
+        } catch (error: any) {
+            return res.sendError("Internal server error", error.message, 500);
         }
     }
     public async signUpUser(req: Request, res: Response) {

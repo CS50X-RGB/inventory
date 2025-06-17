@@ -47,15 +47,25 @@ class UserRepository {
     }
     public async getUserById(id: mongoose.Schema.Types.ObjectId): Promise<any | null> {
         try {
-            const user = await User.findById(id).populate('role');
+            const user = await User.findById(id)
+                .populate({
+                    path: 'role',
+                    populate: {
+                        path: 'permissions', 
+                        model: 'permission'  
+                    }
+                });
+
             if (!user) {
-                return null; // or throw new Error("User not found");
+                return null;
             }
+
             return user.toObject();
         } catch (e) {
-            throw new Error("User Not Found")
+            throw new Error("User Not Found");
         }
     }
+
     public async getAllUsersPaginated(skip: number, limit: number) {
         try {
             const countUser = await User.countDocuments();
@@ -78,6 +88,17 @@ class UserRepository {
             return await User.findByIdAndDelete(id);
         } catch (error) {
             throw new Error(`Delete User Failed`);
+        }
+    }
+    public async updateUser(id: any, userObject: any): Promise<boolean | null> {
+        try {
+            const user = await User.findById(id);
+            if (!user) return null;
+            user.set(userObject);
+            await user.save();
+            return true;
+        } catch (error) {
+            throw new Error(`Error while updating the user`);
         }
     }
     public async updateUserIsBlocked(id: ObjectId): Promise<any | null> {

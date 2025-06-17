@@ -13,19 +13,19 @@ router.post(
     '/create',
     uploadFile.single("file"),
     partNumberMiddleware.checkFile.bind(partNumberMiddleware),
-    userMiddleware.verifyAdmin.bind(userMiddleware),
+  //  userMiddleware.verifyAdmin.bind(userMiddleware),
     partNumberService.createPartNumbers.bind(partNumberService)
 );
 
 router.get("/all/:page/:offset",
-    userMiddleware.verifyAdmin.bind(userMiddleware),
+ //   userMiddleware.verifyAdmin.bind(userMiddleware),
     partNumberMiddleware.checkPageParams.bind(partNumberService),
     partNumberService.getPartNumber.bind(partNumberService),
 );
 
 
 router.delete("/delete/:id",
-    userMiddleware.verifyAdmin.bind(userMiddleware),
+ //   userMiddleware.verifyAdmin.bind(userMiddleware),
     partNumberMiddleware.checkPartNumberId.bind(partNumberMiddleware),
     partNumberService.deletePartNumberByID.bind(partNumberService)
 );

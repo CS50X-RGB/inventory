@@ -1,6 +1,7 @@
 import Role from "../models/roleModel"
 import { RoleInterface, RoleInterfaceGet } from "../../interfaces/roleInterface";
 
+
 class RoleRepository {
   public async createRole(role: RoleInterface): Promise<RoleInterface | null> {
     try {
@@ -51,6 +52,34 @@ class RoleRepository {
       throw new Error(`Error while searching roles`);
     }
   }
+
+  public async togglePermission(roleId: any, permissionId: any) {
+    try {
+      const role = await Role.findById(roleId);
+
+      if (!role) {
+        throw new Error("Role not found");
+      }
+      console.log(role.permissions,"permissions");
+      console.log(permissionId,"permission");
+      const hasPermission = role.permissions.includes(permissionId);
+
+      const updateRole = await Role.findByIdAndUpdate(
+        roleId,
+        hasPermission
+          ? { $pull: { permissions: permissionId } }
+          : { $addToSet: { permissions: permissionId } },
+        { new: true }
+      );
+
+      return updateRole;
+    } catch (error) {
+      console.error("Error while toggling permission:", error);
+      throw new Error("Failed to toggle permission for role");
+    }
+  }
+
+
 }
 
 export default RoleRepository;

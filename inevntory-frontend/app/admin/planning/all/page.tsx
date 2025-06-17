@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 export default function PlanningViewAll() {
     const [page, setPage] = useState<number>(1);
     const [totalCount, setTotalCount] = useState<number>(0);
-    const [pages, setPages] = useState<number>(0);
+    const [pages, setPages] = useState<number>(1);
     const { data: getBom, isFetching, isFetched } = useQuery({
         queryKey: ["getplanning", page],
         queryFn: async () => {
@@ -18,26 +18,34 @@ export default function PlanningViewAll() {
     useEffect(() => {
         if (isFetched) {
             const { data, count } = getBom?.data.data;
-            console.log(data,"data");
+            console.log(data, "data");
             setTotalCount(count);
             setPages(Math.ceil(count / 5));
         }
     }, [isFetching]);
     const columns = [
         {
-            "name" : "Top Level Assembly"
+            "name": "Top Level Assembly"
         },
         {
-            "name" : "Quantity Planned"
+            "name": "Quantity Planned"
         },
         {
-            "name" : "Planning Actions"
+            "name": "Planning Actions"
         }
     ]
+    console.log(pages);
     return (
         <div className="flex flex-col gap-4 p-8">
             <h1 className="text-xl font-bold">Fetched {totalCount} BOMs</h1>
-            <ShowTableData data={getBom?.data?.data.data} columnHeaders={columns} page={page} setPage={setPage} pages={pages} loadingState={isFetching} />
+            <ShowTableData
+                data={getBom?.data?.data.data}
+                columnHeaders={columns}
+                page={page}
+                setPage={setPage}
+                pages={isNaN(pages) ? 1 : pages}
+                loadingState={isFetching}
+            />
         </div>
     )
 }

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Tabs, Tab, Input, Link, Button, Card, CardBody, Autocomplete, AutocompleteItem } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import {currentUser} from "@/core/api/localStorageKeys";
+import { currentUser } from "@/core/api/localStorageKeys";
 import { postData } from "@/core/api/apiHandler";
 import { accountRoutes } from "@/core/api/apiRoutes";
 import Cookies from "js-cookie";
@@ -38,11 +38,7 @@ export default function App() {
         className: "bg-blue-400"
       });
       const { role } = data.data.data.user;
-      if (role === 'BIDDER') {
-        router.push('/bidder');
-      } else if (role === 'SELLER') {
-        router.push('/seller');
-      }
+      router.push("/user");
       setSiginState({
         name: "",
         email: "",
@@ -78,8 +74,15 @@ export default function App() {
         position: "top-right",
         className: "bg-blue-400"
       });
-     // const { role } = data.data.data;
-      router.push("/admin"); 
+      const { role } = data.data.data;
+      localStorage.setItem("ROLE",role);
+      if (role === "ADMIN") {
+        
+        console.log(role, "Role");
+        router.push("/admin");
+      } else {
+        router.push("/user");
+      }
     },
     onError: (error: any) => {
       console.error(error);

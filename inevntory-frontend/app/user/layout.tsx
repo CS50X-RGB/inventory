@@ -9,19 +9,18 @@ import Cookies from "js-cookie";
 import { currentUser } from "@/core/api/localStorageKeys";
 
 
-export default function Admin({ children }: React.ReactNode) {
+export default function UserDashboard({ children }: React.ReactNode) {
     const [user, setUser] = useState<any>({});
 
     const { data: getProfile, isFetched, isFetching } = useQuery({
-        queryKey: ["getProfile"],
+        queryKey: ["getUserProfile"],
         queryFn: async () => {
-            const url = localStorage.getItem("ROLE") === "ADMIN" ? accountRoutes.getMyProfile : accountRoutes.getMineProfile;
-            return await getData(url, {});
+            return await getData(accountRoutes.getMineProfile, {});
         },
     });
     const router = useRouter();
+    // Set user data when fetched
     const [chips, setChips]: any[] = useState<any[]>([]);
-
     useEffect(() => {
         if (isFetched && getProfile?.data) {
             const permissions: any[] = [];
@@ -31,24 +30,13 @@ export default function Admin({ children }: React.ReactNode) {
                         name: p.name,
                         link: p.link
                     }
-
                     permissions.push(obj);
-
                 });
-                if (getProfile.data.data.role && getProfile.data.data.role?.name === "ADMIN") {
-                    const adminNav = {
-                        name: "Permissions",
-                        link: "/admin/permissions"
-                    }
-
-                    permissions.push(adminNav);
-                } else {
-                    const adminNav = {
-                        name: "Update User",
-                        link: "/user/update"
-                    }
-                    permissions.push(adminNav);
+                const adminNav = {
+                    name: "Update User",
+                    link: "/user/update"
                 }
+                permissions.push(adminNav);
                 setChips(permissions);
             }
             setUser(getProfile.data.data);
@@ -58,11 +46,10 @@ export default function Admin({ children }: React.ReactNode) {
     if (isFetching) {
         return (
             <div className="flex w-screen h-screen justify-center items-center">
-                <Spinner title="Loading Admin Data" color="primary" />
+                <Spinner title="Loading User Data" color="primary" />
             </div>
         );
     }
-
 
     const handleLogout = () => {
         Cookies.remove(currentUser);
@@ -74,7 +61,7 @@ export default function Admin({ children }: React.ReactNode) {
         <>
             <div className="flex flex-col-reverse md:flex-row justify-between p-4 w-full items-center">
                 <div className="flex flex-col p-4 gap-2">
-                    <h1 className="text-2xl font-bold">{getProfile?.data?.data?.role?.name} View</h1>
+                    <h1 className="text-2xl font-bold">User Dashboard</h1>
                     <div className="flex flex-wrap gap-4 flex-row">
                         {chips.map((c: any, index: number) => {
                             return (

@@ -14,7 +14,7 @@ type PieChartProps = {
 const PieChart: React.FC<PieChartProps> = ({ data, title }) => {
     const router = useRouter();
     const chartRef = useRef<any>(null);
-
+    
     const mapOfPrice: Record<string, number> = {};
     const values: number[] = [];
     const labels = Object.keys(data);

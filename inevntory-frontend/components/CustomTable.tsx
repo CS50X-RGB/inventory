@@ -12,20 +12,25 @@ import {
   Switch,
   useDisclosure,
   Button,
+  Input,
+  Autocomplete,
+  AutocompleteItem,
 } from "@heroui/react";
 
 import { useMutation } from "@tanstack/react-query";
 import Delete from "@/public/Icons/Delete";
 import { deleteData, putData } from "@/core/api/apiHandler";
-import { accountRoutes,bomRoutes } from "@/core/api/apiRoutes";
+import { accountRoutes, bomRoutes } from "@/core/api/apiRoutes";
 import { queryClient } from "@/app/providers";
 
 import { toast } from "sonner";
 
 import { CheckIcon } from "@/public/Icons/CheckIcon";
 import CrossIcon from "@/public/Icons/CrossIcon";
-
+import PencilIcon from "@/public/Icons/PencilIcon";
 import CustomModal from "./Modal/CustomModal";
+import { useAsyncList } from "@react-stately/data";
+import { localBackend } from "@/core/api/axiosInstance";
 
 interface CustomTableProps {
   page: number;
@@ -42,12 +47,7 @@ export default function CustomTable({
   loadingState,
   data,
 }: CustomTableProps) {
-  const deleteBomById = useMutation({
-    mutationKey : ["deleteBomById"],
-    mutationFn : async (data : any) => {
-      return await deleteDalta(`${bomRoutes.deleteBomById}${data._id}`,{},{});
-    }
-  });
+
   const deleteById = useMutation({
     mutationKey: ["deletebyId"],
     mutationFn: async (id: any) => {
@@ -55,7 +55,7 @@ export default function CustomTable({
     },
     onSuccess: (data: any) => {
       console.log(data.data);
-      toast.success("User Deleted Successfully");
+      toast.success("User Deleted SuccesError: Cannot convert undefined or null to objectsfully");
       queryClient.invalidateQueries();
     },
     onError: (error: any) => {
@@ -63,7 +63,7 @@ export default function CustomTable({
       toast.error("Error caused while deleting user");
     },
   });
-  
+
   const updateBlockById = useMutation({
     mutationKey: ["updateBlockyId"],
     mutationFn: async (id: any) => {
@@ -88,7 +88,7 @@ export default function CustomTable({
     "primary" | "warning" | "success" | "danger" | "default" | "secondary"
   > = {
     ADMIN: "primary",
-    BIDDER: "warning",
+    PLANNER: "warning",
     SELLER: "secondary",
   };
   const {
@@ -97,12 +97,56 @@ export default function CustomTable({
     onOpenChange: onOpenChangeStatus,
     onClose: onCloseStatus,
   } = useDisclosure();
+
+  const {
+    isOpen: isOpenUser,
+    onOpen: onOpenUser,
+    onOpenChange: onOpenChangeUser,
+    onClose: onCloseUser,
+  } = useDisclosure();
+
+  const [updateuserObj, setUpdateUser] = useState<any>(
+    {
+      name: '',
+      email: '',
+      password: '',
+      role: ''
+    }
+  );
+  const updateUser = useMutation({
+    mutationKey: ["updateUser"],
+    mutationFn: async (item : any) => {
+      return await putData(`${accountRoutes.updateUser}${item?._id}`, {}, item);
+    },
+    onMutate : () => {
+      setloadingUser(true);
+    },
+    onSettled : () => {
+      setloadingUser(false);
+    },
+    onSuccess : (data : any) => {
+      setloadingUser(false);
+      console.log(data,"data");
+      toast.success("User Details update",{
+        position : "top-right"
+      });
+      onCloseUser();
+    },
+    onError:(err : any) => {
+      console.error(err,"Error");
+    }
+  });
+  const clickPencil = (item: any) => {
+    const { password, ...sanitizedItem } = item;
+    setUpdateUser(sanitizedItem);
+    onOpenUser();
+  }
   const [item, setItem] = useState<any>({});
   const clickChip = (item: any) => {
     onOpenStatus();
     setItem(item);
-    console.log(item, "Item");
   };
+  const [loadingUser, setloadingUser] = useState<boolean>(false);
   const getValue = (item: any, columnKey: any): React.ReactNode => {
     switch (columnKey) {
       case "role":
@@ -118,14 +162,15 @@ export default function CustomTable({
               className={"size-4 fill-red-300 cursor-pointer"}
               onClick={() => deleteById.mutate(item._id)}
             />
+            <PencilIcon className={"size-4 cursor-pointer"} onClick={() => clickPencil(item)} />
             {item.isBlocked === false ? (
               <Chip
                 className="text-sm cursor-pointer"
-                            color="success"
-                            size="sm"
-                            startContent={<CheckIcon size={15} height={6} width={6} />}
-                            variant="faded"
-                            onClick={() => clickChip(item)}>
+                color="success"
+                size="sm"
+                startContent={<CheckIcon size={15} height={6} width={6} />}
+                variant="faded"
+                onClick={() => clickChip(item)}>
                 Active
               </Chip>
             ) : (
@@ -140,13 +185,23 @@ export default function CustomTable({
                 Blocked
               </Chip>
             )}
+
           </div>
         );
       default:
         return <p>{item[columnKey]}</p>;
     }
   };
-
+  const handleChange = (type: any, value: string) => {
+    setUpdateUser((prev: any) => ({
+      ...prev,
+      [type]: value,
+    }));
+  };
+  const handleFormSubmit = (e : any) => {
+    setloadingUser(true);
+    updateUser.mutate(updateuserObj);
+  }
   return (
     <>
       <Table
@@ -206,6 +261,66 @@ export default function CustomTable({
           </Switch>
         </div>
       </CustomModal>
+      <CustomModal
+        isOpen={isOpenUser}
+        onOpenChange={onOpenChangeUser}
+        heading="Update User"
+        bottomContent={
+          <div className="flex p-2">
+            <Button onPress={onCloseUser} color="danger">
+              Close
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={(e) => handleFormSubmit(e)} className="flex flex-col gap-4 p-4">
+          <Input
+            label="Name"
+            type="text"
+            isRequired
+            placeholder="Write Name"
+            value={updateuserObj?.name}
+            onChange={(e) => handleChange("name", e.target.value)}
+          />
+          <Input
+            label="Email"
+            type="email"
+            isRequired
+            placeholder="Write Email"
+            value={updateuserObj.email}
+            onChange={(e) => handleChange("email", e.target.value)}
+          />
+          <Input
+            label="Password"
+            type="password"
+            placeholder="Write Password"
+            value={updateuserObj.password}
+            onChange={(e) => handleChange("password", e.target.value)}
+          />
+          {/* {updateuserObj && list.items.length > 0 && (
+            <Autocomplete
+              key={String(updateuserObj.role?._id)}
+              className="max-w-xl"
+              inputValue={list.filterText}
+              isLoading={list.isLoading}
+              items={list.items}
+              selectedKey={String(updateuserObj.role?._id)}
+              onSelectionChange={(e) => handleChange("role", e)}
+              label="Select Role"
+              variant="bordered"
+              onInputChange={list.setFilterText}
+              isRequired
+            >
+              {(item: any) => (
+                <AutocompleteItem key={item._id} className="capitalize">
+                  {item.name}
+                </AutocompleteItem>
+              )}
+            </Autocomplete>
+          )} */}
+          <Button isLoading={loadingUser} type="submit" color="primary">Submit</Button>
+        </form>
+      </CustomModal >
     </>
   );
 }

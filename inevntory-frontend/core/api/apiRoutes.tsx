@@ -6,10 +6,13 @@ export const accountRoutes = {
   getMyProfile: "/user/profile",
   getMineProfile: "/user/my/user",
   deleteById: "/user/remove",
+  updateUser : "/user/update/",
   allUsers: '/user/all-users'
 }
 export const rolesRoutes = {
-  getAll: "/roles/all",
+  getAll: "/role/all/roles",
+  getPermission : "/role/all/permissions",
+  update : "/role/update/permissions"
 }
 
 export const partNumbersRoutes = {

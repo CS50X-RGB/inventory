@@ -8,7 +8,7 @@ const router = Router();
 const uomService = new UOMService();
 const userMiddleware = new UserMiddleware();
 
-router.get("/all", userMiddleware.verifyAdmin.bind(userMiddleware), uomService.getAllSearchUOMS.bind(uomService));
+router.get("/all", uomService.getAllSearchUOMS.bind(uomService));
 
 
 export default router;
