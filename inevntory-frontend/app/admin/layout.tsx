@@ -40,7 +40,7 @@ export default function Admin({ children }: { children: React.ReactNode }) {
                         name: "Permissions",
                         link: "/admin/permissions"
                     }
-
+                    
                     permissions.push(adminNav);
                 } else {
                     const adminNav = {

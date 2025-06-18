@@ -107,6 +107,14 @@ export default function App() {
                         link : "/user"
                   })
                 }
+                permissions.push({
+                    name : "Login",
+                    link : "/login"
+                });
+                permissions.push({
+                    name : "Home",
+                    link : "/"
+                });
                 permissions.push(adminNav);
                 const links = permissions.map((p) => p.link);
                 Cookies.set("allowedLinks", JSON.stringify(links), { path: "/" });
