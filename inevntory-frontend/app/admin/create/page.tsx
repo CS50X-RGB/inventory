@@ -64,7 +64,7 @@ export default function CreateFom() {
     };
 
     return (
-        <div className="flex flex-col justify-center items-center h-screen">
+        <div className="flex flex-col justify-center h-[60vh] items-center">
             <Card className="w-full max-w-md">
                 <CardHeader className='text-xl w-full font-bold text-user'>Create User</CardHeader>
                 <CardBody>

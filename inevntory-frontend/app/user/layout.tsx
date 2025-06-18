@@ -9,7 +9,7 @@ import Cookies from "js-cookie";
 import { currentUser } from "@/core/api/localStorageKeys";
 
 
-export default function UserDashboard({ children }: React.ReactNode) {
+export default function UserDashboard({ children }: {children : React.ReactNode}) {
     const [user, setUser] = useState<any>({});
 
     const { data: getProfile, isFetched, isFetching } = useQuery({
@@ -19,7 +19,7 @@ export default function UserDashboard({ children }: React.ReactNode) {
         },
     });
     const router = useRouter();
-    // Set user data when fetched
+
     const [chips, setChips]: any[] = useState<any[]>([]);
     useEffect(() => {
         if (isFetched && getProfile?.data) {
@@ -37,6 +37,8 @@ export default function UserDashboard({ children }: React.ReactNode) {
                     link: "/user/update"
                 }
                 permissions.push(adminNav);
+                //const links = permissions.map((p) => p.link);
+               // Cookies.set("allowedLinks", JSON.stringify(links), { path: "/" });
                 setChips(permissions);
             }
             setUser(getProfile.data.data);
@@ -53,6 +55,10 @@ export default function UserDashboard({ children }: React.ReactNode) {
 
     const handleLogout = () => {
         Cookies.remove(currentUser);
+        Cookies.remove("nextToken");
+        Cookies.remove("allowedLinks");
+        Cookies.remove("userRole");
+        localStorage.removeItem("ROLE");
         localStorage.removeItem(currentUser);
         router.push("/login");
     }

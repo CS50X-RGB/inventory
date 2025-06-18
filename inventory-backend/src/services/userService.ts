@@ -40,7 +40,8 @@ class UserService {
     public async login(req: Request, res: Response) {
         try {
             const user: IUserLogin = req.body;
-            const userDetails: IUserCreateReturn | null = await this.userRepository.getUserByName(user.name);
+            const userDetails: any | null = await this.userRepository.getUserByName(user.name);
+            console.log(userDetails,"user");        
             if (!userDetails) {
                 return res.sendError(null, "User Not found", 400);
             } else {
@@ -59,7 +60,8 @@ class UserService {
                     email: userDetails.email,
                     isBlocked: userDetails.isBlocked,
                     role: userDetails.role.name,
-                    token: accessToken
+                    token: accessToken,
+                    permissions : userDetails.role.permissions
                 }
                 return res.sendFormatted(userResponse, "User Details", 200);
             }

@@ -252,7 +252,7 @@ export default function SingleSearchBom() {
                         </TableBody>
                     </Table>
                 )}
-                {shortfalled && shortfalled.length > 0 ? (
+                {shortfalled && shortfalled.length > 0 && (
                     <div className="flex flex-col gap-4 w-full">
                         <h1 className="text-2xl font-bold">ShortFalled Details</h1>
                         <Table>
@@ -278,7 +278,8 @@ export default function SingleSearchBom() {
                             </TableBody>
                         </Table>
                     </div>
-                ) : (
+                )}
+                {bomData.length > 0 && shortfalled && shortfalled.length == 0 && (
                     <h1 className="text-green-500">Configration can be made</h1>
                 )}
             </div>

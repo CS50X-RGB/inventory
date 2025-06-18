@@ -10,6 +10,7 @@ import { Checkbox } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { queryClient } from "@/app/providers";
 
+
 export default function PermissionPage() {
     const { data: getRoles, isFetching: isFetchingRoles, isSuccess: isRolesSuccess } = useQuery({
         queryKey: ["getRoles"],
@@ -49,22 +50,21 @@ export default function PermissionPage() {
             setInitialized(true);
         }
     }, [isRolesSuccess, isPermissionsSuccess, roles, initialized]);
-  console.log(backendRoleMap);
+    console.log(backendRoleMap,"backendmap");
     const handleCheckboxToggle = (roleId: string, permissionId: string) => {
         // Update backendRoleMap
+       console.log(permissionId,"Perimission");
         setBackendRoleMap((prevMap) => {
-            const currentPermissions = prevMap[roleId] ?? rolesMap[roleId] ?? [];
+            const currentPermissions = prevMap[roleId] ?? [];
             const isChecked = currentPermissions.includes(permissionId);
-            const updatedPermissions = isChecked
-                ? currentPermissions.filter(id => id !== permissionId)
-                : [...currentPermissions, permissionId];
+            const updatedPermissions = isChecked ? currentPermissions.filter(id => id != permissionId) :  [...currentPermissions, permissionId];
+
 
             return {
                 ...prevMap,
                 [roleId]: updatedPermissions
             };
         });
-
         setRolesMap((prevMap) => {
             const currentPermissions = prevMap[roleId] ?? [];
             const isChecked = currentPermissions.includes(permissionId);
@@ -84,25 +84,19 @@ export default function PermissionPage() {
             setisMount(true);
             console.log(rolesMap);
         }
-    }, [rolesMap]);
+    }, [rolesMap,isMount]);
+
 
     const isPermissionChecked = (roleId: string, permissionId: string) => {
-        console.log(rolesMap, "map");
-
-        if (!rolesMap[roleId] || !Array.isArray(rolesMap[roleId])) {
-            return false;
-        }
-        if (backendRoleMap[roleId]) {
-            return backendRoleMap[roleId].includes(permissionId);
-        }
-
-        return rolesMap[roleId].includes(permissionId);
+        console.log(roleId,permissionId,rolesMap);
+        const rolePermissions = rolesMap[roleId] ?? [];
+        return rolePermissions.includes(permissionId);
     };
     if (isMount) {
 
         return (
             <>
-                <Table aria-label="Permission Table">
+                <Table key={JSON.stringify(rolesMap)} aria-label="Permission Table">
                     <TableHeader>
                         <TableColumn key="page">Page Name</TableColumn>
                         {roles.map((role: any) => (
@@ -110,6 +104,7 @@ export default function PermissionPage() {
                         ))}
                     </TableHeader>
                     <TableBody
+                        key={JSON.stringify(rolesMap)}
                         items={permissions}
                         loadingContent={<Spinner />}
                         loadingState={
@@ -126,12 +121,12 @@ export default function PermissionPage() {
                                     }
 
                                     const roleId = String(columnKey);
-
                                     const isChecked = isPermissionChecked(roleId, permission._id);
                                     return (
                                         <TableCell>
                                             <Checkbox
-                                                isSelected={isChecked}
+                                                key={`${roleId}-${permission._id}-${isChecked}`} 
+                                                isSelected={rolesMap[roleId]?.includes(permission._id)}
                                                 onChange={() => handleCheckboxToggle(roleId, permission._id)}
                                             />
                                         </TableCell>
@@ -142,9 +137,11 @@ export default function PermissionPage() {
                     </TableBody>
 
                 </Table>
-                {Object.keys(backendRoleMap).length > 0 && (
-                    <Button onPress={() => updatePermissions.mutate()}>Update</Button>
-                )}
+                <div className="flex flex-row w-full items-center justify-end p-5">
+                    {Object.keys(backendRoleMap).length > 0 && (
+                        <Button color="primary"  onPress={() => updatePermissions.mutate()}>Update</Button>
+                    )}
+                </div>
             </>
         );
     } else {

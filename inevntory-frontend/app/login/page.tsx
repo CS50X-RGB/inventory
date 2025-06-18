@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Tabs, Tab, Input, Link, Button, Card, CardBody, Autocomplete, AutocompleteItem } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,18 @@ export default function App() {
     password: "",
     role: ""
   });
+  useEffect(() => {
+    const role = localStorage.getItem("ROLE");
+    const token = localStorage.getItem(currentUser);
+    if(token){
+      if (role === "ADMIN") {
+        console.log(role, "Role");
+        router.replace("/admin");
+      } else {
+        router.replace("/user");
+      }
+    }
+  },[]);
   const router = useRouter();
   const signupMutate = useMutation({
     mutationKey: ["signinMutate"],
@@ -67,7 +79,38 @@ export default function App() {
         setisLoadingLogin(false);
         return;
       }
+      console.log(data.data.data,"data");
       localStorage.setItem(currentUser, JSON.stringify(data.data.data));
+      Cookies.set("nextToken",data.data.data.token);
+        const permissions: any[] = [];
+           if (data.data.data.permissions && data.data.data.permissions) {
+                data?.data?.data?.permissions.map((p: any) => {
+                    const obj = {
+                        name: p.name,
+                        link: p.link
+                    }
+                    permissions.push(obj);
+                });
+                let adminNav = {};
+                if(data.data.data.role === "ADMIN"){
+                   adminNav = {
+                      name: "Permissions",
+                      link: "/admin/permissions"
+                  }
+                }else{
+                    adminNav = {
+                      name: "Update User",
+                      link: "/user/update"
+                  }
+                  permissions.push({
+                        name : "User Dashboard",
+                        link : "/user"
+                  })
+                }
+                permissions.push(adminNav);
+                const links = permissions.map((p) => p.link);
+                Cookies.set("allowedLinks", JSON.stringify(links), { path: "/" });
+           }
       Cookies.set(currentUser, data.data.data.token);
       setisLoadingLogin(false);
       toast.success('Logged In Successfully', {
@@ -76,13 +119,15 @@ export default function App() {
       });
       const { role } = data.data.data;
       localStorage.setItem("ROLE",role);
+      Cookies.set("userRole", role);
+      
       if (role === "ADMIN") {
-        
         console.log(role, "Role");
-        router.push("/admin");
+        router.push(permissions[0].link);
       } else {
         router.push("/user");
       }
+      
     },
     onError: (error: any) => {
       console.error(error);

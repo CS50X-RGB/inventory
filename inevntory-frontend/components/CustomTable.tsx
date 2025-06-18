@@ -55,7 +55,9 @@ export default function CustomTable({
     },
     onSuccess: (data: any) => {
       console.log(data.data);
-      toast.success("User Deleted SuccesError: Cannot convert undefined or null to objectsfully");
+      toast.success("User Deleted Succes",{
+          position: "top-right"
+      });
       queryClient.invalidateQueries();
     },
     onError: (error: any) => {

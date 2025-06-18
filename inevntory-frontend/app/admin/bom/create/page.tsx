@@ -43,7 +43,6 @@ export default function CreateBom() {
             [type]: value
         }));
     };
-
     return (
         <div className="flex flex-col justify-center items-center h-[80vh] w-full">
             <Card className="w-1/3 font-bold font-mono flex flex-col items-center justify-center">

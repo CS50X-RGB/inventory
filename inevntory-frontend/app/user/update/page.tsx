@@ -59,7 +59,7 @@ export default function UpdateUser() {
         updateUser.mutate(user);
     }
     return (
-        
+       <div className="w-full h-[70vh] flex flex-col items-center justify-center"> 
         <Card className="w-full max-w-md">
             <CardHeader className='text-xl w-full font-bold text-user'>Update User</CardHeader>
             <CardBody>
@@ -91,5 +91,6 @@ export default function UpdateUser() {
                 </form>
             </CardBody>
         </Card>
+        </div>
     )
 }

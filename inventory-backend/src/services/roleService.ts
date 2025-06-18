@@ -74,7 +74,7 @@ class RoleService {
             for (const permission of permissions) {
                 const existingRole = await this.permissionRepository.findPermissionByName(permission.name);
                 if (existingRole) {
-                    console.log(`Role '${permission.name}' already exists`);
+                    console.log(`Permission '${permission.name}' already exists`);
                 } else {
                     await this.permissionRepository.createPermission(permission);
                     console.log(`Permision '${permission.name}' created successfully`);

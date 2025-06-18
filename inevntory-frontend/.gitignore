@@ -15,6 +15,9 @@
 # production
 /build
 
+# backend_link
+/core/api/axiosInstance.tsx
+
 # misc
 .DS_Store
 *.pem

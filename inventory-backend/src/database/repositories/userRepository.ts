@@ -39,7 +39,13 @@ class UserRepository {
     }
     public async getUserByName(name: string): Promise<any | null> {
         try {
-            const user = await User.findOne({ name }).populate('role').lean();
+            const user = await User.findOne({ name }).populate({
+                    path: 'role',
+                    populate: {
+                        path: 'permissions', 
+                        model: 'permission'  
+                    }
+                }).lean();
             return user;
         } catch (error: any) {
             throw new Error("No user found");
