@@ -37,8 +37,8 @@ export default function UserDashboard({ children }: {children : React.ReactNode}
                     link: "/user/update"
                 }
                 permissions.push(adminNav);
-                //const links = permissions.map((p) => p.link);
-               // Cookies.set("allowedLinks", JSON.stringify(links), { path: "/" });
+               const links = permissions.map((p) => p.link);
+                Cookies.set("allowedLinks", JSON.stringify(links), { path: "/" });
                 setChips(permissions);
             }
             setUser(getProfile.data.data);

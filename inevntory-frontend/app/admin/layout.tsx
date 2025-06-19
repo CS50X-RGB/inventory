@@ -49,8 +49,8 @@ export default function Admin({ children }: { children: React.ReactNode }) {
                     }
                     permissions.push(adminNav);
                 }
-                //const links = permissions.map((p) => p.link);
-              //  Cookies.set("allowedLinks", JSON.stringify(links), { path: "/" });
+              const links = permissions.map((p) => p.link);
+              Cookies.set("allowedLinks", JSON.stringify(links), { path: "/" });
                 setChips(permissions);
             }
             setUser(getProfile.data.data);
